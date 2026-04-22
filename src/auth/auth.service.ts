@@ -41,7 +41,14 @@ export class AuthService {
     });
 
     // 5. Generate JWT token
-    const token = this.generateToken(user._id.toString(), user.email);
+    const accessToken = this.generateAccessToken(
+      user._id.toString(),
+      user.email,
+    );
+    const refreshToken = this.generateRefreshToken(
+      user._id.toString(),
+      user.email,
+    );
 
     // 6. Return response without password
     return {
@@ -53,7 +60,8 @@ export class AuthService {
           email: user.email,
           role: user.role,
         },
-        token,
+        accessToken,
+        refreshToken,
       },
     };
   }
@@ -61,9 +69,7 @@ export class AuthService {
   async login(createLoginDto: CreateLoginDto): Promise<any> {
     // 1. Validate credentials are provided
     if (!createLoginDto.email || !createLoginDto.password) {
-      throw new BadRequestException(
-        'Email and password are required',
-      );
+      throw new BadRequestException('Email and password are required');
     }
 
     // 2. Find user by email
@@ -82,7 +88,14 @@ export class AuthService {
     }
 
     // 4. Generate JWT token
-    const token = this.generateToken(user._id.toString(), user.email);
+    const accessToken = this.generateAccessToken(
+      user._id.toString(),
+      user.email,
+    );
+    const refreshToken = this.generateRefreshToken(
+      user._id.toString(),
+      user.email,
+    );
 
     // 5. Return response
     return {
@@ -94,16 +107,27 @@ export class AuthService {
           email: user.email,
           role: user.role,
         },
-        token,
+        accessToken,
+        refreshToken,
       },
     };
   }
 
-  private generateToken(userId: string, email: string): string {
+  private generateAccessToken(userId: string, email: string): string {
     const payload = { userId, email };
+
     return this.jwtService.sign(payload, {
-      expiresIn: '7d',
       secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+      expiresIn: '1h', // 🔥 ACCESS TOKEN = 1 HOUR
+    });
+  }
+
+  private generateRefreshToken(userId: string, email: string): string {
+    const payload = { userId, email };
+
+    return this.jwtService.sign(payload, {
+      secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+      expiresIn: '7d', // 🔁 REFRESH TOKEN = 7 DAYS
     });
   }
 
