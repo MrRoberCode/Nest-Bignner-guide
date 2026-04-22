@@ -12,12 +12,22 @@ import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    // 1. Move ConfigModule to the top and set isGlobal: true
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+
+    // 2. Use forRootAsync so it waits for the environment variables to load
+    MongooseModule.forRootAsync({
+      useFactory: () => ({
+        uri: process.env.mongoURL,
+      }),
+    }),
+
     ProductModule,
     AdminModule,
     UserModule,
     AuthModule,
-    MongooseModule.forRoot(process.env.mongoURL as string),
-    ConfigModule.forRoot(),
   ],
   controllers: [AppController, ProductController],
   providers: [AppService, ProductService],
